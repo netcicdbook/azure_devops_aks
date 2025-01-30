@@ -46,9 +46,7 @@ stages:
       displayName: "Debug: Check Kubernetes Files"
       inputs:
         targetType: 'inline'
-        script: |
-            Write-Output "Checking Kubernetes directory..."
-            Get-ChildItem -Path "$(Build.SourcesDirectory)\Kubernetes" -Recurse
+        script: |            
             echo "Updating image versions in Kubernetes manifests..."
             (Get-Content $(Build.SourcesDirectory)/Kubernetes/ms.auditory.api/deployment.yaml) -replace "IMAGE_PLACEHOLDER_AUDITORY", "$(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG)" | Set-Content Kubernetes/ms.auditory.api/deployment.yaml
             (Get-Content $(Build.SourcesDirectory)/Kubernetes/ms.registry.api/deployment.yaml) -replace "IMAGE_PLACEHOLDER_REGISTRY", "$(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)" | Set-Content Kubernetes/ms.registry.api/deployment.yaml
