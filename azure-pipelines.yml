@@ -21,7 +21,7 @@ stages:
     - task: AzureCLI@2
       displayName: "Login to Azure"
       inputs:
-        azureSubscription: "NombreDeTuServiceConnection"
+        azureSubscription: "ServiceConnectionAzureResources"
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
