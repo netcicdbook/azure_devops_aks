@@ -1,0 +1,56 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  ACR_NAME: "netcicdbookacr"
+  AKS_RESOURCE_GROUP: "GrupoRecursosAKS"
+  AKS_CLUSTER_NAME: "AKSCluster"
+  KUBE_NAMESPACE: "netcicdbook"
+  IMAGE_TAG: "$(Build.BuildId)"  # Usamos el ID de build para la versión de la imagen
+
+stages:
+- stage: Build_And_Push
+  displayName: "Build and Push Images to ACR"
+  jobs:
+  - job: BuildAndPushImages
+    displayName: "Build Docker Images and Push to ACR"
+    steps:
+    - task: AzureCLI@2
+      displayName: "Login to Azure"
+      inputs:
+        azureSubscription: "NombreDeTuServiceConnection"
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(ACR_NAME)
+
+    - script: |
+            echo "Building and pushing images to ACR..."
+            docker build -t $(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Auditory/Auditory.API/Dockerfile .
+            docker push $(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG)
+
+            docker build -t $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Registry/Registry.API/Dockerfile .
+            docker push $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)
+
+            echo "Building Vue.js app with environment variables..."
+            docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile .
+            docker push $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG)
+      displayName: "Build and Push Docker Images"
+
+    - script: |
+        echo "Updating image versions in Kubernetes manifests..."
+        sed -i 's|IMAGE_PLACEHOLDER_AUDITORY|$(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG)|g' Kubernetes/ms.auditory.api/deployment.yaml
+        sed -i 's|IMAGE_PLACEHOLDER_REGISTRY|$(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)|g' Kubernetes/ms.registry.api/deployment.yaml
+        sed -i 's|IMAGE_PLACEHOLDER_WORKTIME_APP|$(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG)|g' Kubernetes/worktime-app/deployment.yaml
+
+        echo "Applying Kubernetes manifests..."
+        kubectl apply -f Kubernetes/ms.auditory.api -n $(KUBE_NAMESPACE)
+        kubectl apply -f Kubernetes/ms.registry.api -n $(KUBE_NAMESPACE)
+        kubectl apply -f Kubernetes/worktime-app -n $(KUBE_NAMESPACE)
+        kubectl apply -f Kubernetes/ms.mongo.auditory.db -n $(KUBE_NAMESPACE)
+        kubectl apply -f Kubernetes/ms.postgresql.registry.db -n $(KUBE_NAMESPACE)
+        kubectl apply -f Kubernetes/ms.rabbitmq.bus -n $(KUBE_NAMESPACE)
+      displayName: "Apply Kubernetes Manifests"
