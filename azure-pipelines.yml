@@ -1,0 +1,69 @@
+trigger:
+- main
+
+pool:
+  name: Default #Pool del Agente  Self-Hosted
+
+variables:
+  ACR_NAME: "netcicdbookacr"
+  AKS_RESOURCE_GROUP: "GrupoRecursosAKS"
+  AKS_CLUSTER_NAME: "AKSCluster"
+  KUBE_NAMESPACE: "netcicdbook"
+  IMAGE_TAG: "$(Build.BuildId)"  # Usamos el ID de build para la versión de la imagen
+
+stages:
+- stage: Build_And_Push
+  displayName: "Build and Push Images to ACR"
+  jobs:
+  - job: BuildAndPushImages
+    displayName: "Build Docker Images and Push to ACR"
+    steps:
+    - task: AzureCLI@2
+      displayName: "Login to Azure"
+      inputs:
+        azureSubscription: "ServiceConnectionAzureResources"
+        scriptType: "ps"
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(ACR_NAME)
+
+    - script: |
+            echo "Building and pushing images to ACR..."
+            docker build -t $(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Auditory/Auditory.API/Dockerfile WorkTimeRecord.Solution/
+            docker push $(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG)
+
+            docker build -t $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Registry/Registry.API/Dockerfile WorkTimeRecord.Solution/
+            docker push $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)
+
+            echo "Building Vue.js app with environment variables..."
+            docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile WorkTimeRecord.UI/worktime-record-app/
+            docker push $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG)
+      displayName: "Build and Push Docker Images"
+      
+    - checkout: self  # Asegura que el código está disponible en la máquina del agente Self-Hosted
+
+    - task: PowerShell@2
+      displayName: "Debug: Check Kubernetes Files"
+      inputs:
+        targetType: 'inline'
+        script: |
+            Write-Output "Checking Kubernetes directory content..."
+            Get-ChildItem -Path "$(Build.SourcesDirectory)/Kubernetes" -Recurse            
+
+            Write-Output "Checking if namespace $(KUBE_NAMESPACE) exists..."
+            $namespaceExists = kubectl get namespace $(KUBE_NAMESPACE) --ignore-not-found
+
+            if (-not $namespaceExists) {
+                Write-Output "Namespace $(KUBE_NAMESPACE) not found. Creating..."
+                kubectl create namespace $(KUBE_NAMESPACE)
+            } else {
+                Write-Output "Namespace $(KUBE_NAMESPACE) already exists."
+            }
+            
+            Write-Output "Applying Kubernetes manifests..."
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/worktime-app" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.mongo.auditory.db" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.postgresql.registry.db" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.rabbitmq.bus" -n $(KUBE_NAMESPACE)            
