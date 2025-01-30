@@ -43,10 +43,12 @@ stages:
     - checkout: self  # Asegura que el código está disponible en la máquina del agente Self-Hosted
 
     - task: PowerShell@2
-      displayName: "Apply Kubernetes Manifests"
+      displayName: "Debug: Check Kubernetes Files"
       inputs:
         targetType: 'inline'
         script: |
+            Write-Output "Checking Kubernetes directory..."
+            Get-ChildItem -Path "$(Build.SourcesDirectory)\Kubernetes" -Recurse
             echo "Updating image versions in Kubernetes manifests..."
             (Get-Content Kubernetes/ms.auditory.api/deployment.yaml) -replace "IMAGE_PLACEHOLDER_AUDITORY", "$(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG)" | Set-Content Kubernetes/ms.auditory.api/deployment.yaml
             (Get-Content Kubernetes/ms.registry.api/deployment.yaml) -replace "IMAGE_PLACEHOLDER_REGISTRY", "$(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)" | Set-Content Kubernetes/ms.registry.api/deployment.yaml
