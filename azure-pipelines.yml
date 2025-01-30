@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  vmImage: Default #Pool del Agente  Self-Hosted
+  vmImage: ITEM-S129451 #Pool del Agente  Self-Hosted
 
 variables:
   ACR_NAME: "netcicdbookacr"
