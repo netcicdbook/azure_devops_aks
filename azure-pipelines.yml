@@ -60,6 +60,13 @@ stages:
                 Write-Output "Namespace $(KUBE_NAMESPACE) already exists."
             }
             
+            Write-Output "Actualizando versiones de imagen en los manifiestos de Kubernetes..."
+            (Get-Content "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api/deployment.yaml") -replace "\$\(IMAGE_TAG\)", "$(IMAGE_TAG)" | Set-Content "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api/deployment.yaml"
+            
+            (Get-Content "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api/deployment.yaml") -replace "\$\(IMAGE_TAG\)", "$(IMAGE_TAG)" | Set-Content "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api/deployment.yaml"
+            
+            (Get-Content "$(Build.SourcesDirectory)/Kubernetes/worktime-app/deployment.yaml") -replace "\$\(IMAGE_TAG\)", "$(IMAGE_TAG)" | Set-Content "$(Build.SourcesDirectory)/Kubernetes/worktime-app/deployment.yaml"
+
             Write-Output "Applying Kubernetes manifests..."
             kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api" -n $(KUBE_NAMESPACE)
             kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api" -n $(KUBE_NAMESPACE)
