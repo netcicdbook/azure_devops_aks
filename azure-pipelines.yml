@@ -46,16 +46,13 @@ stages:
       displayName: "Debug: Check Kubernetes Files"
       inputs:
         targetType: 'inline'
-        script: |            
-            echo "Updating image versions in Kubernetes manifests..."
-            (Get-Content $(Build.SourcesDirectory)/Kubernetes/ms.auditory.api/deployment.yaml) -replace "IMAGE_PLACEHOLDER_AUDITORY", "$(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG)" | Set-Content Kubernetes/ms.auditory.api/deployment.yaml
-            (Get-Content $(Build.SourcesDirectory)/Kubernetes/ms.registry.api/deployment.yaml) -replace "IMAGE_PLACEHOLDER_REGISTRY", "$(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)" | Set-Content Kubernetes/ms.registry.api/deployment.yaml
-            (Get-Content $(Build.SourcesDirectory)/Kubernetes/worktime-app/deployment.yaml) -replace "IMAGE_PLACEHOLDER_WORKTIME_APP", "$(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG)" | Set-Content Kubernetes/worktime-app/deployment.yaml
-
-            echo "Applying Kubernetes manifests..."
-            kubectl apply -f $(Build.SourcesDirectory)/Kubernetes/ms.auditory.api -n $(KUBE_NAMESPACE)
-            kubectl apply -f $(Build.SourcesDirectory)/Kubernetes/ms.registry.api -n $(KUBE_NAMESPACE)
-            kubectl apply -f $(Build.SourcesDirectory)/Kubernetes/worktime-app -n $(KUBE_NAMESPACE)
-            kubectl apply -f $(Build.SourcesDirectory)/Kubernetes/ms.mongo.auditory.db -n $(KUBE_NAMESPACE)
-            kubectl apply -f $(Build.SourcesDirectory)/Kubernetes/ms.postgresql.registry.db -n $(KUBE_NAMESPACE)
-            kubectl apply -f $(Build.SourcesDirectory)/Kubernetes/ms.rabbitmq.bus -n $(KUBE_NAMESPACE)                  
+        script: |
+            Write-Output "Checking Kubernetes directory content..."
+            Get-ChildItem -Path "$(Build.SourcesDirectory)/Kubernetes" -Recurse            
+            Write-Output "Applying Kubernetes manifests..."
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/worktime-app" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.mongo.auditory.db" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.postgresql.registry.db" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.rabbitmq.bus" -n $(KUBE_NAMESPACE)            
