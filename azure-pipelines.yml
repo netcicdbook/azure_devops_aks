@@ -36,7 +36,7 @@ stages:
             docker push $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)
 
             echo "Building Vue.js app with environment variables..."
-            docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile WorkTimeRecord.UI/
+            docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile WorkTimeRecord.UI/worktime-record-app/
             docker push $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG)
       displayName: "Build and Push Docker Images"
       
