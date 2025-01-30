@@ -15,8 +15,6 @@ spec:
       labels:
         app: worktime-app               #Etiqueta que tendran los Pods creados
     spec:
-      imagePullSecrets:
-        - name: secretazureacr
       containers:                       #Config del contenedor
       - name: worktime-app-container    #Nombre del contenedor en el POD
         image: netcicdbookacr.azurecr.io/worktime-app:$(IMAGE_TAG) #Imagen usada para crear el contenedor
