@@ -1,0 +1,64 @@
+version: '3.4'
+
+services:
+
+  registry.api:
+    container_name: ms.registry.api
+    depends_on:
+      - ms.postgresql.registry.db
+      - ms.rabbitmq.bus
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+    ports:
+      - "5200:8080"
+      - "5201:8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+  
+  ms.postgresql.registry.db:
+    container_name: ms.postgresql.registry.db
+    restart: always    
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: registrydb
+      #psql -U admin -d registrydb
+      #SELECT * FROM user_worktime_record;
+
+  ms.rabbitmq.bus:
+    container_name: ms.rabbitmq.bus
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin  
+      - RABBITMQ_DEFAULT_PASS=password
+
+  auditory.api:
+    container_name: ms.auditory.api
+    depends_on:
+      - ms.mongo.auditory.db
+      - ms.rabbitmq.bus
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+    ports:
+      - "5300:8080"
+      - "5301:8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+  
+  ms.mongo.auditory.db:
+    container_name: ms.mongo.auditory.db
+    restart: always    
+    ports:
+      - "27017:27017"
+  

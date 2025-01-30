@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+  namespace: netcicdbook
+  labels:
+    app: ms-mongo-auditory-db           #Etiqueta de identificación
+spec:
+  replicas: 1                           #Solo se ejecuta una instancia de contenedor (1 POD)
+  selector:
+    matchLabels:
+      app: ms-mongo-auditory-db         #Etiqueta para asociar el deployment con los pods
+  template:
+    metadata:
+      labels:
+        app: ms-mongo-auditory-db       #Etiqueta que tendran los Pods creados
+    spec:
+      containers:                       #Config del contenedor
+      - name: ms-mongo-auditory-db-container  #Nombre del contenedor en el POD
+        image: mongo:latest             #Imagen usada para crear el contenedor MongoDB
+        resources:                          #Recursos asignados al contenedor:
+            limits:                         #Límite máximo de memoria y CPU
+              memory: "256Mi"
+              cpu: "250m"
+            requests:                       #Se solicita inicialmente una memoria y CPU
+              memory: "128Mi"
+              cpu: "100m" 
+        ports:
+        - containerPort: 27017          #Puerto expuesto por MongoDB
+        env:                            #Configuración de variables de entorno
+        - name: MONGO_INITDB_DATABASE   #Nombre variable entorno
+          value: AuditoryDB             #Valor asignado literalmente
+        - name: MONGO_INITDB_ROOT_USERNAME   #Nombre variable entorno
+          valueFrom:                         #Valor asignado de
+            secretKeyRef:                    #Se obtiene el valor de un Secret
+              name: mongodb-secret           #El fichero mongodb-secret
+              key: mongo-user
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongo-password
+        volumeMounts:                   #Montamos volúmenes para persistencia y configuración
+        - name: mongodb-data-volume     #Utilizamos el nombre del Volumen Persistencia datos
+          mountPath: /data/db           #Se monta el volumen en esta ubicación predeterminada de MongoDB
+        - name: init-js-volume          #Montamos el volumen de configuración
+          mountPath: /docker-entrypoint-initdb.d  #Punto de entrada usado por MongoDB para iniciar un script
+      volumes:                          #Definición de volúmenes
+      - name: mongodb-data-volume       #Nombre del Volumen de persistencia de datos
+        persistentVolumeClaim:          #Nos Vinculamos a un PVC para reclamar la persistencia
+          claimName: mongodb-pvc        #Usamos este PVC
+      - name: init-js-volume            #Nombre del Volumen de configuración SCRIPT
+        configMap:                      #Es un configMap
+          name: mongodb-init            #Con este nombre

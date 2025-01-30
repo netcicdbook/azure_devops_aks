@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-ui-service
+  namespace: netcicdbook
+  labels:
+    app: ms-rabbitmq-bus
+spec:
+  selector:
+    app: ms-rabbitmq-bus  #Busca los pods con esta etiqueta para asociar el service
+  ports:
+  - name: rabbitmq-ui
+    port: 15672            #Puerto externo que expone el servicio
+    protocol: TCP          #Protocolo usado TCP
+    targetPort: 15672      #Puerto Interno del contenedor
+  type: LoadBalancer       #Accesible desde fuera del cluster

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-bus-service
+  namespace: netcicdbook
+  labels:
+    app: ms-rabbitmq-bus
+spec:
+  selector:
+    app: ms-rabbitmq-bus  #Busca los pods con esta etiqueta para asociar el service
+  ports:
+  - name: rabbitmq
+    port: 5672             #Puerto externo que expone el servicio
+    protocol: TCP          #Protocolo usado TCP
+    targetPort: 5672       #Puerto Interno del contenedor
+  type: ClusterIP          #Solo accesible dentro del clúster de K8

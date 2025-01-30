@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume  #Define un volumen persistente para ser reclamado
+metadata:
+  name: mongodb-pv      #Nombre del volumen
+spec:
+  capacity:             #Define la capacidad de almacenamiento físico
+    storage: 1Gi        #Será de 1 Gigabyte su almacenamiento
+  accessModes:          #Modo de acceso al almacenamiento
+    - ReadWriteOnce     #Volumen accesible por PODs del mismo nodo
+  persistentVolumeReclaimPolicy: Retain #Conservar los datos aun sin PVC
+  storageClassName: default   #Clase de almacenamiento que usará
+  hostPath:             #Tipo de almacenamiento persistente (directorio local)
+    path: /mnt/data/mongodb #Ubicación del sistema de archivos del nodo

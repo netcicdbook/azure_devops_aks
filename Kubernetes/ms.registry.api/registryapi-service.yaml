@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: registryapi-service
+  namespace: netcicdbook
+spec:
+  selector:
+    app: ms-registry-api  #Busca los pods con esta etiqueta para asociar el service
+  ports:
+  - name: http
+    port: 5200            #Puerto externo que expone el servicio
+    targetPort: 8080      #Puerto Interno del contenedor
+  type: LoadBalancer      #Accesible desde fuera del cluster
+  loadBalancerIP: 4.180.203.149

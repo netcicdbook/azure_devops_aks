@@ -1,0 +1,11 @@
+/WorkTimeRecord.Solution/.vs
+/WorkTimeRecord.Solution/Auditory/Auditory.API/bin
+/WorkTimeRecord.Solution/Auditory/Auditory.API/obj
+/WorkTimeRecord.Solution/Components/Components.Communication/bin
+/WorkTimeRecord.Solution/Components/Components.Communication/obj
+/WorkTimeRecord.Solution/ms.postgresql.registry.db/pg_data
+/WorkTimeRecord.Solution/ms.sqlserver.registry.db/pg_data
+/WorkTimeRecord.Solution/bin
+/WorkTimeRecord.Solution/obj
+/WorkTimeRecord.Solution/Registry/Registry.API/bin
+/WorkTimeRecord.Solution/Registry/Registry.API/obj

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql-deployment
+  namespace: netcicdbook
+  labels:
+    app: ms-postgresql-registry-db        #Etiqueta de idnentificación
+spec:
+  replicas: 1                             #Solo se ejecuta una instancia de contenedor (1 POD)
+  selector:
+    matchLabels:
+      app: ms-postgresql-registry-db      #Etiqueta para asociar el deployment con los pods
+  template:
+    metadata:
+      labels:
+        app: ms-postgresql-registry-db    #Etiqueta que tendran los Pods creados
+    spec:
+      containers:                         #Config del contenedor
+      - name: ms-postgresql-registry-db-container #Nombre del contenedor en el POD
+        image: postgres:latest                    #Imagen usada para crear el contenedor PosgreSQL
+        resources:                          #Recursos asignados al contenedor:
+            limits:                         #Límite máximo de memoria y CPU
+              memory: "256Mi"
+              cpu: "250m"
+            requests:                       #Se solicita inicialmente una memoria y CPU
+              memory: "128Mi"
+              cpu: "100m"  
+        ports:
+        - containerPort: 5432                    #Puerto expuesto por PostgreSQL
+        env:                                     #Configuración de variables de entorno
+        - name: POSTGRES_DB                      #Nombre variable entorno
+          valueFrom:                             #Valor asignado de
+            secretKeyRef:                        #Se obtiene el valor de un Secret
+              name: postgresql-secret            #El fichero postgresql-secret              
+              key: postgresql-db                 #Su variable postgresql-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: postgresql-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: postgresql-password
+        volumeMounts:                            #Montamos volúmenes para persistencia y configuración
+        - name: postgresql-data-volume           #Utilizamos el nombre del Volumen Persistencia datos
+          mountPath: /var/lib/postgresql/data    #Se monta el volumen en esta ubicación predeterminada de PostgreSQL
+        - name: init-sql-volume                  #Montamos el volumen de configuración
+          mountPath: /docker-entrypoint-initdb.d #Punto de entrada usado por PostgreSQL para iniciar un script
+      volumes:                                   #Definición de volúmenes
+      - name: postgresql-data-volume             #Nombre del Volumen de persistencia de datos
+        persistentVolumeClaim:                   #Nos Vinculamos a un PVC para reclamar la persistencia
+          claimName: postgresql-pvc              #Usamos este PVC
+      - name: init-sql-volume                    #Nombre del Volumen de configuración SCRIPT
+        configMap:                               #Es un configMap
+          name: postgresql-init                  #Con este nombre

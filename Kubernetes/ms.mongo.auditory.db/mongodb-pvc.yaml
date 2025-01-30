@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc         #Nombre del reclamador de volumen persistente
+  namespace: netcicdbook    #Espacio de nombres donde se encuentra
+spec:  
+  accessModes:              #Modo de almacenamiento que usa
+    - ReadWriteOnce         #Volumen accesible por PODs del mismo nodo
+  storageClassName: default #Clase de almacenamiento que usará
+  resources:
+    requests:
+      storage: 1Gi          #Cantidad de almacenamiento solicitado

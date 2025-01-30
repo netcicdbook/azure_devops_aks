@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registryapi-deployment
+  namespace: netcicdbook
+  labels:
+    app: ms-registry-api                  #Etiqueta de identificación
+spec:
+  replicas: 1                             #Solo se ejecuta una instancia de contenedor (1 POD)
+  selector:
+    matchLabels:
+      app: ms-registry-api                #Etiqueta para asociar el deployment con los pods
+  template:
+    metadata:
+      labels:
+        app: ms-registry-api              #Etiqueta que tendran los Pods creados
+    spec:
+      imagePullSecrets:
+        - name: secretazureacr                                  
+      containers:                         #Config del contenedor
+      - name: ms-registry-api-container   #Nombre del contenedor en el POD
+        image: netcicdbookacr.azurecr.io/ms.registry.api  #Imagen usada para crear el contenedor
+        resources:                          #Recursos asignados al contenedor:
+            limits:                         #Límite máximo de memoria y CPU
+              memory: "256Mi"
+              cpu: "250m"
+            requests:                       #Se solicita inicialmente una memoria y CPU
+              memory: "128Mi"
+              cpu: "100m" 
+        ports:
+        - containerPort: 8080             #Puerto expuesto por la API
+        env:                              #Configuración de variables de entorno
+        - name: ASPNETCORE_HTTP_PORTS     #Variable de entorno para el puerto interno HTTP
+          value: "8080"                   #Valor del puerto HTTP 8080
+        - name: ASPNETCORE_ENVIRONMENT    #Variable de entorno para el entorno
+          value: Development              #Development
+        - name: POSTGRES_HOST             #Variable entorno PostgreSQL Host
+          valueFrom:                      #Valor asignado de
+            secretKeyRef:                 #Se obtiene el valor de un Secret
+              name: registryapi-secret    #El fichero registryapi-secret
+              key: postgres-host          #Valor de la variable postgres-host
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: registryapi-secret
+              key: postgres-port
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: registryapi-secret
+              key: postgresql-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: registryapi-secret
+              key: postgresql-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: registryapi-secret
+              key: postgresql-password
+        - name: ConnectionStrings__UserRecord #Sobrescribimos del appsettings el valor de UserRecord
+          value: "Host=$(POSTGRES_HOST);Port=$(POSTGRES_PORT);Database=$(POSTGRES_DB);Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)"
+        - name: MessageBroker__Host
+          valueFrom:
+            secretKeyRef:
+              name: registryapi-secret
+              key: rabbitmq-host
+        - name: MessageBroker__UserName
+          valueFrom:
+            secretKeyRef:
+              name: registryapi-secret
+              key: rabbitmq-user
+        - name: MessageBroker__Password
+          valueFrom:
+            secretKeyRef:
+              name: registryapi-secret
+              key: rabbitmq-password

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worktime-app-deployment
+  namespace: netcicdbook
+  labels:
+    app: worktime-app                   #Etiqueta de identificación
+spec: 
+  replicas: 1                           #Solo se ejecuta una instancia de contenedor (1 POD)
+  selector:
+    matchLabels:
+      app: worktime-app                 #Etiqueta para asociar el deployment con los pods
+  template:
+    metadata:
+      labels:
+        app: worktime-app               #Etiqueta que tendran los Pods creados
+    spec:
+      imagePullSecrets:
+        - name: secretazureacr
+      containers:                       #Config del contenedor
+      - name: worktime-app-container    #Nombre del contenedor en el POD
+        image: netcicdbookacr.azurecr.io/worktime-app #Imagen usada para crear el contenedor
+        resources:                          #Recursos asignados al contenedor:
+            limits:                         #Límite máximo de memoria y CPU
+              memory: "256Mi"
+              cpu: "250m"
+            requests:                       #Se solicita inicialmente una memoria y CPU
+              memory: "128Mi"
+              cpu: "100m" 
+        ports:
+        - containerPort: 80              #Puerto expuesto por la aplicación VUE

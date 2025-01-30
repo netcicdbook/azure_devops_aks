@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-deployment
+  namespace: netcicdbook
+  labels:
+    app: ms-rabbitmq-bus                #Etiqueta de identificación
+spec:
+  replicas: 1                           #Solo se ejecuta una instancia de contenedor (1 POD)
+  selector:
+    matchLabels:
+      app: ms-rabbitmq-bus              #Etiqueta para asociar el deployment con los pods
+  template:
+    metadata:
+      labels:
+        app: ms-rabbitmq-bus            #Etiqueta que tendran los Pods creados
+    spec:
+      containers:                       #Config del contenedor
+      - name: ms-rabbitmq-bus-container #Nombre del contenedor en el POD
+        image: rabbitmq:3-management    #Imagen usada para crear el contenedor
+        resources:                          #Recursos asignados al contenedor:
+            limits:                         #Límite máximo de memoria y CPU
+              memory: "256Mi"
+              cpu: "250m"
+            requests:                       #Se solicita inicialmente una memoria y CPU
+              memory: "128Mi"
+              cpu: "100m" 
+        ports:
+        - containerPort: 5672           #Puerto expuesto por RabbitMQ
+        - containerPort: 15672          #Puerto expuesto por RabbirMQ UI
+        env:                            #Configuración de variables de entorno
+        - name: RABBITMQ_DEFAULT_USER   #Nombre variable entorno
+          valueFrom:                    #Valor asignado de
+            secretKeyRef:               #Se obtiene el valor de un Secret
+              name: rabbitmq-secret     #El fichero rabbitmq-secret
+              key: rabbitmq-user
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: rabbitmq-password

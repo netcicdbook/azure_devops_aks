@@ -1,0 +1,40 @@
+version: '3.4'
+
+services:
+  registry.api:
+    image: ${DOCKER_REGISTRY-}registryapi
+    build:
+      context: .
+      dockerfile: Registry/Registry.API/Dockerfile
+
+  ms.postgresql.registry.db:
+    image: postgres:latest
+    build:
+      context: .
+      dockerfile: ms.postgresql.registry.db/Dockerfile    
+    volumes:     
+      - ./ms.postgresql.registry.db/pg_data:/var/lib/postgresql/data
+      - ./ms.postgresql.registry.db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  ms.rabbitmq.bus:
+    image: rabbitmq:3-management
+   
+  auditory.api:
+    image: ${DOCKER_REGISTRY-}auditoryapi
+    build:
+      context: .
+      dockerfile: Auditory/Auditory.API/Dockerfile     
+
+  ms.mongo.auditory.db:
+    image: mongo
+    build:
+      context: .
+      dockerfile: ms.mongo.auditory.db/Dockerfile
+    environment:        
+        MONGO_INITDB_DATABASE: AuditoryDB        
+        MONGO_INITDB_ROOT_USERNAME: admin  
+        MONGO_INITDB_ROOT_PASSWORD: admin 
+    volumes:
+      - ./ms.mongo.auditory.db/init.js:/docker-entrypoint-initdb.d/init.js
+
+

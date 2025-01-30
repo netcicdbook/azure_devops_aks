@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" Sdk="Microsoft.Docker.Sdk">
+  <PropertyGroup Label="Globals">
+    <ProjectVersion>2.1</ProjectVersion>
+    <DockerTargetOS>Linux</DockerTargetOS>
+    <DockerPublishLocally>False</DockerPublishLocally>
+    <ProjectGuid>f075ce2b-b57d-409c-b2c8-a24593482764</ProjectGuid>
+    <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
+    <DockerServiceUrl>{Scheme}://localhost:{ServicePort}</DockerServiceUrl>
+    <DockerServiceName>auditory.api</DockerServiceName>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="docker-compose.override.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </None>
+    <None Include="docker-compose.yml" />
+    <None Include=".dockerignore" />
+    <None Include="ms.postgresql.registry.db\Dockerfile" />
+    <None Include="ms.postgresql.registry.db\init.sql" />
+    <None Include="ms.mongo.auditory.db\Dockerfile" />
+    <None Include="ms.mongo.auditory.db\init.js" />
+    <None Include="ms.rabbitmq.bus\Dockerfile" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ms.postgresql.registry.db\pg_data\" />
+  </ItemGroup>
+</Project>

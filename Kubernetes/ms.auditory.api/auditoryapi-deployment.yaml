@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auditoryapi-deployment
+  namespace: netcicdbook
+  labels:
+    app: ms-auditory-api                    #Etiqueta de identificación
+spec:
+  replicas: 1                               #Solo se ejecuta una instancia de contenedor (1 POD)
+  selector:
+    matchLabels:
+      app: ms-auditory-api                  #Etiqueta para asociar el deployment con los pods
+  template:
+    metadata:
+      labels:
+        app: ms-auditory-api              #Etiqueta que tendran los Pods creados
+    spec:
+      imagePullSecrets:
+          - name: secretazureacr                                 
+      containers:                         #Config del contenedor
+      - name: ms-auditory-api-container     #Nombre del contenedor en el POD
+        image: netcicdbookacr.azurecr.io/ms.auditory.api  #Imagen usada para crear el contenedor      
+        resources:                          #Recursos asignados al contenedor:
+            limits:                         #Límite máximo de memoria y CPU
+              memory: "256Mi"
+              cpu: "250m"
+            requests:                       #Se solicita inicialmente una memoria y CPU
+              memory: "128Mi"
+              cpu: "100m" 
+        ports:
+        - containerPort: 8080               #Puerto expuesto por la API
+        env:
+        - name: ASPNETCORE_HTTP_PORTS       #Variable de entorno para el puerto interno HTTP
+          value: "8080"                     #Valor del puerto HTTP 8080
+        - name: ASPNETCORE_ENVIRONMENT      #Variable de entorno para el entorno
+          value: Development                #Development
+        - name: ConnectionStrings__UserRecord__HostName #Sobrescribimos del appsettings el valor de Hostname
+          valueFrom:                        #Valor asignado de
+            secretKeyRef:                   #Se obtiene el valor de un Secret
+              name: auditoryapi-secret      #El fichero auditoryapi-secret
+              key: mongodb-host             #Valor de la variable mongodb-host
+        - name: ConnectionStrings__UserRecord__Port
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: mongodb-port
+        - name: ConnectionStrings__UserRecord__DataBase
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: mongodb-database
+        - name: ConnectionStrings__UserRecord__Collection
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: mongodb-collection
+        - name: ConnectionStrings__UserRecord__Username
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: mongodb-user
+        - name: ConnectionStrings__UserRecord__Password
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: mongodb-password
+        - name: MessageBroker__Host
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: rabbitmq-host
+        - name: MessageBroker__UserName
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: rabbitmq-user
+        - name: MessageBroker__Password
+          valueFrom:
+            secretKeyRef:
+              name: auditoryapi-secret
+              key: rabbitmq-password
