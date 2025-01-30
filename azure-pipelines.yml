@@ -49,6 +49,17 @@ stages:
         script: |
             Write-Output "Checking Kubernetes directory content..."
             Get-ChildItem -Path "$(Build.SourcesDirectory)/Kubernetes" -Recurse            
+            
+            Write-Output "Checking if namespace $(KUBE_NAMESPACE) exists..."
+            $namespaceExists = kubectl get namespace $(KUBE_NAMESPACE) --ignore-not-found
+
+            if (-not $namespaceExists) {
+                Write-Output "Namespace $(KUBE_NAMESPACE) not found. Creating..."
+                kubectl create namespace $(KUBE_NAMESPACE)
+            } else {
+                Write-Output "Namespace $(KUBE_NAMESPACE) already exists."
+            }
+            
             Write-Output "Applying Kubernetes manifests..."
             kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api" -n $(KUBE_NAMESPACE)
             kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api" -n $(KUBE_NAMESPACE)
