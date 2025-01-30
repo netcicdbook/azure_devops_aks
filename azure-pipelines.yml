@@ -29,14 +29,14 @@ stages:
 
     - script: |
             echo "Building and pushing images to ACR..."
-            docker build -t $(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Auditory/Auditory.API/Dockerfile WorkTimeRecord.Solution/Auditory/Auditory.API/
+            docker build -t $(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Auditory/Auditory.API/Dockerfile WorkTimeRecord.Solution/
             docker push $(ACR_NAME).azurecr.io/auditory-api:$(IMAGE_TAG)
 
-            docker build -t $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Registry/Registry.API/Dockerfile WorkTimeRecord.Solution/Registry/Registry.API/
+            docker build -t $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Registry/Registry.API/Dockerfile WorkTimeRecord.Solution/
             docker push $(ACR_NAME).azurecr.io/registry-api:$(IMAGE_TAG)
 
             echo "Building Vue.js app with environment variables..."
-            docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile WorkTimeRecord.UI/worktime-record-app/
+            docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile WorkTimeRecord.UI/
             docker push $(ACR_NAME).azurecr.io/worktime-record-app:$(IMAGE_TAG)
       displayName: "Build and Push Docker Images"
       
@@ -49,7 +49,7 @@ stages:
         script: |
             Write-Output "Checking Kubernetes directory content..."
             Get-ChildItem -Path "$(Build.SourcesDirectory)/Kubernetes" -Recurse            
-            
+
             Write-Output "Checking if namespace $(KUBE_NAMESPACE) exists..."
             $namespaceExists = kubectl get namespace $(KUBE_NAMESPACE) --ignore-not-found
 
