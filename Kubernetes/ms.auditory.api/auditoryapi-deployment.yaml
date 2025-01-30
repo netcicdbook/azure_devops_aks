@@ -19,7 +19,7 @@ spec:
           - name: secretazureacr                                 
       containers:                         #Config del contenedor
       - name: ms-auditory-api-container     #Nombre del contenedor en el POD
-        image: netcicdbookacr.azurecr.io/ms.auditory.api  #Imagen usada para crear el contenedor      
+        image: netcicdbookacr.azurecr.io/ms.auditory.api:$(IMAGE_TAG)  #Imagen usada para crear el contenedor      
         resources:                          #Recursos asignados al contenedor:
             limits:                         #Límite máximo de memoria y CPU
               memory: "256Mi"
