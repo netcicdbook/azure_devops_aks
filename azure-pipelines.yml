@@ -22,7 +22,7 @@ stages:
       displayName: "Login to Azure"
       inputs:
         azureSubscription: "ServiceConnectionAzureResources"
-        scriptType: 'bash'
+        scriptType: "ps"
         scriptLocation: 'inlineScript'
         inlineScript: |
           az acr login --name $(ACR_NAME)
