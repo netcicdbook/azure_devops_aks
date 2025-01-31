@@ -1,0 +1,74 @@
+
+trigger:
+- main
+
+pool:
+  name: Default #Pool del Agente  Self-Hosted
+
+variables:
+  ACR_NAME: "netcicdbookacr"
+  AKS_RESOURCE_GROUP: "GrupoRecursosAKS"
+  AKS_CLUSTER_NAME: "AKSCluster"
+  KUBE_NAMESPACE: "netcicdbook"
+  IMAGE_TAG: "$(Build.BuildId)"  # Usamos el ID de build para la versión de la imagen
+
+stages:
+- stage: Build_And_Push
+  displayName: "Construcción de Imágenes y publicación a ACR"
+  jobs:
+  - job: BuildAndPushImages
+    displayName: "Construcción de Imágenes y publicación a ACR"
+    steps:
+    - task: AzureCLI@2
+      displayName: "Login Azure"
+      inputs:
+        azureSubscription: "ServiceConnectionAzureResources"
+        scriptType: "ps"
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(ACR_NAME)
+    - checkout: self
+
+    - script: |
+            echo "Construir imágenes y publicarlas en ACR..."
+            docker build -t $(ACR_NAME).azurecr.io/ms.auditory.api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Auditory/Auditory.API/Dockerfile WorkTimeRecord.Solution/
+            docker push $(ACR_NAME).azurecr.io/ms.auditory.api:$(IMAGE_TAG)
+
+            docker build -t $(ACR_NAME).azurecr.io/ms.registry.api:$(IMAGE_TAG) -f WorkTimeRecord.Solution/Registry/Registry.API/Dockerfile WorkTimeRecord.Solution/
+            docker push $(ACR_NAME).azurecr.io/ms.registry.api:$(IMAGE_TAG)
+
+            echo "Construir Vue con variables de entorno de .env.aks..."
+            docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile WorkTimeRecord.UI/worktime-record-app/
+            docker push $(ACR_NAME).azurecr.io/worktime-app:$(IMAGE_TAG)
+      displayName: "Build and Push Docker Images"  
+
+    - task: PowerShell@2
+      displayName: "Kubernetes"
+      inputs:
+        targetType: 'inline'
+        script: |
+            Write-Output "Checking Kubernetes directory content..."
+            Get-ChildItem -Path "$(Build.SourcesDirectory)/Kubernetes" -Recurse    
+            
+            Write-Output "Comprobar si existe el espacio de nombres $(KUBE_NAMESPACE)..."
+            $namespaceExists = kubectl get namespace $(KUBE_NAMESPACE) --ignore-not-found
+
+            if (-not $namespaceExists) {
+                Write-Output "Namespace $(KUBE_NAMESPACE) No encontrado. Crear..."
+                kubectl create namespace $(KUBE_NAMESPACE)
+            } else {
+                Write-Output "Namespace $(KUBE_NAMESPACE) Existe."
+            }
+
+            Write-Output "Actualizando versiones de imagen en los manifiestos de Kubernetes..."
+            (Get-Content "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api/auditoryapi-deployment.yaml") -replace "\$\(IMAGE_TAG\)", "$(IMAGE_TAG)" | Set-Content "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api/auditoryapi-deployment.yaml"            
+            (Get-Content "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api/registryapi-deployment.yaml") -replace "\$\(IMAGE_TAG\)", "$(IMAGE_TAG)" | Set-Content "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api/registryapi-deployment.yaml"            
+            (Get-Content "$(Build.SourcesDirectory)/Kubernetes/worktime-app/worktime-app-deployment.yaml") -replace "\$\(IMAGE_TAG\)", "$(IMAGE_TAG)" | Set-Content "$(Build.SourcesDirectory)/Kubernetes/worktime-app/worktime-app-deployment.yaml"
+
+            Write-Output "Applying Kubernetes manifests..."
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.auditory.api" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.registry.api" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/worktime-app" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.mongo.auditory.db" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.postgresql.registry.db" -n $(KUBE_NAMESPACE)
+            kubectl apply -f "$(Build.SourcesDirectory)/Kubernetes/ms.rabbitmq.bus" -n $(KUBE_NAMESPACE)   
