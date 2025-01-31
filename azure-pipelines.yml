@@ -27,6 +27,7 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
           az acr login --name $(ACR_NAME)
+    - checkout: self
 
     - script: |
             echo "Construir imágenes y publicarlas en ACR..."
@@ -39,9 +40,7 @@ stages:
             echo "Construir Vue con variables de entorno de .env.aks..."
             docker build --build-arg MODE=":aks" -t $(ACR_NAME).azurecr.io/worktime-app:$(IMAGE_TAG) -f WorkTimeRecord.UI/worktime-record-app/Dockerfile WorkTimeRecord.UI/worktime-record-app/
             docker push $(ACR_NAME).azurecr.io/worktime-app:$(IMAGE_TAG)
-      displayName: "Build and Push Docker Images"
-      
-    - checkout: self
+      displayName: "Build and Push Docker Images"  
 
     - task: PowerShell@2
       displayName: "Kubernetes"
