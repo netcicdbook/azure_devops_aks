@@ -11,4 +11,4 @@ spec:
     port: 5300              #Puerto externo que expone el servicio
     targetPort: 8080        #Puerto Interno del contenedor
   type: LoadBalancer        #Accesible desde fuera del cluster
-  loadBalancerIP: 52.178.1.85
+  loadBalancerIP: 20.4.47.51
