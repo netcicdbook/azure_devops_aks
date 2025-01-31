@@ -48,6 +48,9 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
+            Write-Output "Checking Kubernetes directory content..."
+            Get-ChildItem -Path "$(Build.SourcesDirectory)/Kubernetes" -Recurse    
+            
             Write-Output "Comprobar si existe el espacio de nombres $(KUBE_NAMESPACE)..."
             $namespaceExists = kubectl get namespace $(KUBE_NAMESPACE) --ignore-not-found
 
